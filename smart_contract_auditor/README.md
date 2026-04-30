@@ -1,25 +1,36 @@
-# Smart Contract Auditor Agent
+# Smart Contract Auditor Agent - Multi-Contract Security Analysis
 
 نظام متكامل لتدقيق العقود الذكية (Smart Contract Auditor Agent) يستخدم أدوات حقيقية للتحليل واكتشاف الثغرات وتأكيدها عملياً.
 
 ## المميزات
 
-- ✅ **قراءة عقود Solidity** من ملفات
-- ✅ **تحليل ثابت** باستخدام Slither
-- ✅ **تحليل ذكي متقدم** باستخدام DeepSeek AI للثغرات المعقدة
-- ✅ **اكتشاف ثغرات معقدة متعددة الخطوات**: Multi-step Reentrancy, Flash Loan Attacks, Oracle Manipulation, Business Logic Exploits
+- ✅ **قراءة عقود Solidity** من ملفات متعددة (Router, Proxy, Implementation, Libraries)
+- ✅ **تحليل العلاقات بين العقود**: Proxy Patterns, DelegateCall Chains, Cross-contract Calls
+- ✅ **تحليل ثابت** باستخدام Slither لكل العقود
+- ✅ **تحليل ذكي متقدم** باستخدام DeepSeek AI للثغرات المعقدة عبر العقود المتعددة
+- ✅ **اكتشاف ثغرات معقدة متعددة الخطوات**: Cross-contract Reentrancy, Storage Collision, Access Control Bypass Chains
 - ✅ **اختبار عملي** عبر Fuzzing بـ Echidna
-- ✅ **توليد PoC تلقائي** باستخدام Foundry للاستغلال المعقد
+- ✅ **توليد PoC تلقائي** باستخدام Foundry للاستغلال المعقد متعدد العقود
 - ✅ **تأكيد الثغرات** بتشغيل الكود فعلياً
 - ✅ **تقرير نهائي** بالثغرات المؤكدة فقط
 
 ## التركيز على الثغرات المعقدة و Zero-day (2025-2026)
 
-هذا النظام مصمم خصيصاً لاكتشاف **أحدث الثغرات المعقدة متعددة الخطوات** و **ثغرات Zero-day** المتوقعة في 2025-2026:
+هذا النظام مصمم خصيصاً لاكتشاف **أحدث الثغرات المعقدة متعددة الخطوات** و **ثغرات Zero-day** المتوقعة في 2025-2026، مع تركيز خاص على:
 
 ### 🎯 فئات الثغرات المتقدمة
 
-#### 1. Advanced Reentrancy Variants (2025-2026)
+#### 1. Multi-Contract Attack Vectors ⭐ NEW
+- **Cross-contract Reentrancy**: هجمات تعبر عدة عقود في سلسلة واحدة
+- **Proxy Pattern Vulnerabilities**: Storage collision, delegatecall issues
+- **Router/Dispatcher Logic Flaws**: أخطاء في توجيه الاستدعاءات بين العقود
+- **Storage Collision in Upgradeable Proxies**: تصادم التخزين في البروكسي القابل للترقية
+- **DelegateCall Chain Attacks**: سلاسل DelegateCall عبر عقود متعددة
+- **Access Control Bypass Across Contracts**: تجاوز الصلاحيات عبر التفاعلات
+- **Inter-contract State Manipulation**: التلاعب بالحالة عبر العقود
+- **Composability Exploits**: استغلال التركيبات غير المتوقعة بين العقود
+
+#### 2. Advanced Reentrancy Variants (2025-2026)
 - Cross-Function Reentrancy with State Shadowing
 - Read-only Reentrancy in Oracle Price Feeds
 - Reentrancy Through DelegateCall Proxies
@@ -133,17 +144,26 @@ pip install -r requirements.txt
 
 ## الاستخدام
 
-### الأمر الأساسي
+### الأمر الأساسي لعقد واحد
 
 ```bash
 python main.py --contract-path /path/to/contract.sol --api-key sk-xxxxx
+```
+
+### تدقيق نظام متعدد العقود (Router + Proxy + Implementation)
+
+```bash
+python main.py --contract-path ./Router.sol \
+               --additional-paths ./Proxy.sol ./Implementation.sol ./Library.sol \
+               --api-key sk-xxxxx
 ```
 
 ### الخيارات المتاحة
 
 | الخيار | الوصف | مطلوب |
 |--------|-------|--------|
-| `--contract-path` | مسار ملف العقد الذكي (Solidity) | ✅ نعم |
+| `--contract-path` | مسار ملف العقد الذكي الرئيسي | ✅ نعم |
+| `--additional-paths` | مسارات ملفات العقود الإضافية (Router, Proxy, Libraries) | ❌ لا |
 | `--api-key` | مفتاح DeepSeek API | ✅ نعم |
 | `--config` | مسار ملف الإعدادات | ❌ لا (default: config.yaml) |
 | `--deepseek-model` | اسم نموذج DeepSeek | ❌ لا (default: deepseek-chat) |
@@ -156,8 +176,13 @@ python main.py --contract-path /path/to/contract.sol --api-key sk-xxxxx
 # تدقيق عقد بسيط
 python main.py --contract-path ./MyToken.sol --api-key sk-abc123
 
+# تدقيق نظام متعدد العقود (⭐ NEW)
+python main.py --contract-path ./DeFiRouter.sol \
+               --additional-paths ./Proxy.sol ./Implementation.sol \
+               --api-key sk-abc123
+
 # تدقيق مع حفظ التقرير
-python main.py --contract-path ./DeFiProtocol.sol --api-key sk-abc123 --output audit_report.json
+python main.py --contract-path ./Protocol.sol --api-key sk-abc123 --output audit_report.json
 
 # استخدام نموذج مختلف
 python main.py --contract-path ./NFT.sol --api-key sk-abc123 --deepseek-model deepseek-coder

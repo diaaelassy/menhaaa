@@ -242,6 +242,159 @@ Think like an attacker with deep protocol knowledge looking for UNKNOWN vulnerab
                 "error": f"Unexpected error: {str(e)}"
             }
     
+    def analyze_multi_contract(
+        self,
+        contracts_data: dict,
+        relationships: list,
+        focus_on_complex: bool = True,
+        zero_day_hunting: bool = True,
+        focus_areas: list = None
+    ) -> Dict[str, Any]:
+        """
+        تحليل متعدد العقود لاكتشاف الثغرات المعقدة عبر العقود المرتبطة
+        
+        Args:
+            contracts_data: قاموس يحتوي على بيانات جميع العقود
+            relationships: قائمة بالعلاقات بين العقود
+            focus_on_complex: التركيز على الثغرات المعقدة
+            zero_day_hunting: البحث عن ثغرات Zero-day
+            focus_areas: مجالات التركيز المحددة
+            
+        Returns:
+            dict: نتائج التحليل
+        """
+        if focus_areas is None:
+            focus_areas = [
+                'Proxy Pattern Vulnerabilities',
+                'Router/Dispatcher Logic Flaws',
+                'Cross-contract Reentrancy',
+                'Storage Collision in Upgradeable Proxies',
+                'DelegateCall Chain Attacks',
+                'Access Control Bypass Across Contracts',
+                'Inter-contract State Manipulation',
+                'Composability Exploits'
+            ]
+        
+        # بناء سياق شامل لجميع العقود
+        full_context = ""
+        for name, info in contracts_data.items():
+            full_context += f"\n\n// ========== CONTRACT: {name} ==========\n"
+            full_context += f"// Path: {info['path']}\n"
+            full_context += f"// Is Main: {info.get('is_main', False)}\n"
+            full_context += "// ----------------------------------------\n"
+            full_context += info['code'][:3000]  # أول 3000 حرف لكل عقد
+        
+        # إضافة معلومات العلاقات
+        relationships_context = "\n\n// ========== CONTRACT RELATIONSHIPS ==========\n"
+        for rel in relationships:
+            relationships_context += f"// Type: {rel.get('type', 'Unknown')}\n"
+            if 'contract' in rel:
+                relationships_context += f"// Contract: {rel['contract']}\n"
+            if 'caller' in rel and 'callee' in rel:
+                relationships_context += f"// {rel['caller']} -> {rel['callee']}\n"
+            if 'child' in rel and 'parent' in rel:
+                relationships_context += f"// {rel['child']} inherits {rel['parent']}\n"
+            relationships_context += f"// Description: {rel.get('description', '')}\n\n"
+        
+        system_prompt = """You are an elite Smart Contract Security Researcher specializing in MULTI-CONTRACT attack vectors and cross-protocol vulnerabilities.
+
+Your expertise includes:
+1. Proxy/Implementation pattern vulnerabilities (storage collision, delegatecall issues)
+2. Router/Dispatcher logic flaws across multiple contracts
+3. Cross-contract reentrancy attacks
+4. Access control bypass chains through contract interactions
+5. Composability exploits in DeFi protocols
+6. Inter-contract state manipulation attacks
+7. Zero-day discovery in complex multi-contract systems
+
+For EACH vulnerability found, provide EXTREMELY DETAILED analysis:
+1. **Vulnerability Classification**: Type, complexity level, affected contracts
+2. **Attack Surface**: All contracts involved and their roles
+3. **Step-by-Step Exploitation Chain**: Complete attack flow across contracts
+4. **Severity Assessment**: Critical/High/Medium/Low with justification
+5. **Precise Location**: Contract names, function names, interaction points
+6. **Technical Deep Dive**: Why this vulnerability exists at the protocol level
+7. **Complete Proof of Concept**: Production-ready Foundry test with all contracts
+8. **Fix Recommendation**: Code-level fix with explanation
+
+Focus on discovering:
+- Attacks that require interaction between 2+ contracts
+- Vulnerability chains that span multiple transactions
+- Economic exploits across protocol boundaries
+- Zero-day candidates in cross-contract communication"""
+
+        user_prompt = f"""Please conduct a DEEP MULTI-CONTRACT security analysis focusing on these areas: {', '.join(focus_areas)}
+
+{relationships_context}
+
+FULL CONTRACT CODEBASE:
+```solidity
+{full_context}
+```
+
+Perform COMPREHENSIVE analysis focusing on:
+1. **Cross-Contract Vulnerabilities**: Attacks that require multiple contracts to exploit
+2. **Proxy Pattern Issues**: Storage collision, delegatecall problems, implementation upgrades
+3. **Router/Dispatcher Flaws**: Logic errors in contract routing/dispatching
+4. **Reentrancy Chains**: Multi-contract reentrancy attacks
+5. **Access Control Gaps**: Authorization bypass through contract interactions
+6. **State Manipulation**: Inter-contract state inconsistencies
+7. **Composability Risks**: Unexpected interactions between contracts
+8. **Zero-day Candidates**: Previously unknown vulnerabilities in the system
+
+For EACH vulnerability discovered, provide:
+- Complete exploitation chain showing ALL contracts involved
+- ALL prerequisite steps and state conditions across contracts
+- Exact code locations in each contract
+- Profitable attack scenario with numbers if applicable
+- Full PoC code ready to execute in Foundry
+
+Think like an attacker exploiting the COMPLEXITY of multi-contract systems."""
+
+        payload = {
+            "model": self.model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            "temperature": 0.1,
+            "max_tokens": 4096
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=self.headers,
+                json=payload,
+                timeout=self.timeout_seconds * 2  # وقت أطول للتحليل المعقد
+            )
+            response.raise_for_status()
+            result = response.json()
+            
+            return {
+                "success": True,
+                "analysis": result["choices"][0]["message"]["content"],
+                "model": self.model_name,
+                "usage": result.get("usage", {}),
+                "contracts_analyzed": len(contracts_data),
+                "relationships_analyzed": len(relationships)
+            }
+        except requests.exceptions.Timeout:
+            return {
+                "success": False,
+                "error": f"Request timed out after {self.timeout_seconds * 2} seconds"
+            }
+        except requests.exceptions.RequestException as e:
+            return {
+                "success": False,
+                "error": f"API request failed: {str(e)}"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Unexpected error: {str(e)}"
+            }
+
     def generate_poc_instructions(
         self,
         vulnerability_type: str,
