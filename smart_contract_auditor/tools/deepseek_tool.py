@@ -29,50 +29,176 @@ class DeepSeekTool:
     def analyze_contract(
         self,
         contract_code: str,
-        vulnerability_types: Optional[list] = None
+        vulnerability_types: Optional[list] = None,
+        focus_on_complex: bool = True,
+        zero_day_hunting: bool = True
     ) -> Dict[str, Any]:
         """
-        تحليل عقد ذكي لاكتشاف الثغرات
+        تحليل عقد ذكي لاكتشاف الثغرات المعقدة و Zero-day
         
         Args:
             contract_code: كود العقد الذكي (Solidity)
             vulnerability_types: أنواع الثغرات المطلوب البحث عنها
+            focus_on_complex: التركيز على الثغرات المعقدة متعددة الخطوات
+            zero_day_hunting: البحث عن ثغرات Zero-day غير معروفة
             
         Returns:
             dict: نتائج التحليل
         """
         if vulnerability_types is None:
-            vulnerability_types = [
-                "Reentrancy",
-                "Overflow/Underflow",
-                "Front-running",
-                "Access Control",
-                "Business Logic Errors",
-                "Gas Optimization",
-                "Timestamp Dependence",
-                "Denial of Service"
-            ]
+            if zero_day_hunting and focus_on_complex:
+                # أحدث أساليب الاختراق المتوقعة في 2025-2026 وثغرات Zero-day
+                vulnerability_types = [
+                    # Advanced Reentrancy Variants (2025-2026)
+                    "Cross-Function Reentrancy with State Shadowing",
+                    "Read-only Reentrancy in Oracle Price Feeds",
+                    "Reentrancy Through DelegateCall Proxies",
+                    "Multi-protocol Composability Reentrancy",
+                    "Reentrancy in ERC-777/1155 Callbacks",
+                    "Gas-efficient Reentrancy Guards Bypass",
+                    
+                    # Flash Loan & Economic Attacks
+                    "Flash Loan Sandwich Attacks on AMM Liquidity",
+                    "Multi-hop Flash Loan Arbitrage Exploits",
+                    "Flash Mint Attack Vectors on NFT Protocols",
+                    "Collateral Swapping Flash Loan Drains",
+                    "Governance Proposal Flash Loan Voting",
+                    
+                    # Oracle Manipulation (Advanced)
+                    "TWAP Oracle Manipulation via Multi-block Attacks",
+                    "Cross-chain Oracle Price Desynchronization",
+                    "Chainlink Feed Circumvention Techniques",
+                    "Oracle Staleness Window Exploitation",
+                    "Multi-oracle Aggregator Consensus Attacks",
+                    
+                    # MEV & Front-running (2025 variants)
+                    "Advanced Mempool Scanning & JIT Liquidity Attacks",
+                    "Validator Extractable Value (VEV) Post-Merge",
+                    "Cross-domain MEV in L2 Rollups",
+                    "Time-bandit Attacks on Historical State",
+                    "Atomic Arbitrage Backrunning Chains",
+                    
+                    # Access Control & Governance
+                    "Signature Malleability in Multi-sig Wallets",
+                    "Governance Token Weight Manipulation",
+                    "Proposal Execution Timing Attacks",
+                    "DelegateCall Chain Authorization Bypass",
+                    "Upgradeable Proxy Storage Collision Attacks",
+                    
+                    # DeFi Protocol-Specific
+                    "Yield Farming Reward Calculation Exploits",
+                    "Liquidity Pool Share Dilution Attacks",
+                    "Staking Reward Lock-up Period Bypass",
+                    "Derivative Pricing Model Manipulation",
+                    "Perpetual Futures Funding Rate Exploits",
+                    
+                    # Cross-chain & Bridge Vulnerabilities
+                    "Bridge Message Verification Bypass",
+                    "Cross-chain Replay Attacks",
+                    "Wrapped Token Mint/Burn Race Conditions",
+                    "Light Client Proof Verification Flaws",
+                    "Relayer Incentive Misalignment Exploits",
+                    
+                    # L2 & Scaling Solutions
+                    "Optimistic Rollup Fraud Proof Window Attacks",
+                    "ZK-proof Circuit Constraint Bypasses",
+                    "Sequencer Censorship & Ordering Attacks",
+                    "State Commitment Delay Exploits",
+                    
+                    # Novel Attack Vectors (Zero-day potential)
+                    "Storage Layout Assumption Violations",
+                    "Compiler Optimization Side-effects",
+                    "EVM Opcode Gas Cost Change Exploits",
+                    "Precompile Behavior Edge Cases",
+                    "Block Header Manipulation Post-Merge",
+                    "Miner/Validator Timestamp Oracles",
+                    
+                    # Business Logic Complex Chains
+                    "Multi-transaction State Machine Exploits",
+                    "Economic Incentive Misalignment Chains",
+                    "Rational Actor Assumption Violations",
+                    "Game Theory Equilibrium Disruptions",
+                    "Mechanism Design Flaws in Tokenomics"
+                ]
+            elif focus_on_complex:
+                # التركيز على الثغرات المعقدة التي تحتاج تحليل عميق
+                vulnerability_types = [
+                    "Multi-step Reentrancy Attacks",
+                    "Business Logic Errors with State Manipulation",
+                    "Complex Access Control Bypass Chains",
+                    "Flash Loan Attack Vectors",
+                    "Oracle Manipulation with Multiple Steps",
+                    "Governance Vote Manipulation",
+                    "MEV Extraction Strategies",
+                    "Composability Exploits in DeFi Protocols",
+                    "Economic Incentive Misalignments",
+                    "Time-based Attack Windows",
+                    "Cross-protocol Arbitrage Exploits",
+                    "Liquidity Drainage Scenarios"
+                ]
+            else:
+                vulnerability_types = [
+                    "Reentrancy",
+                    "Overflow/Underflow",
+                    "Front-running",
+                    "Access Control",
+                    "Business Logic Errors",
+                    "Gas Optimization",
+                    "Timestamp Dependence",
+                    "Denial of Service"
+                ]
         
-        system_prompt = """You are an expert Smart Contract Security Auditor. 
-Analyze the provided Solidity smart contract code for security vulnerabilities.
-For each vulnerability found, provide:
-1. Vulnerability type
-2. Severity (Critical, High, Medium, Low)
-3. Location (line number if possible)
-4. Description
-5. Proof of Concept suggestion
-6. Recommended fix
+        system_prompt = """You are an elite Smart Contract Security Researcher specializing in ZERO-DAY vulnerability discovery and advanced attack vectors expected in 2025-2026.
 
-Be precise and only report actual vulnerabilities, not potential issues."""
+Your mission is to find SOPHISTICATED, MULTI-STEP attack vectors that:
+1. Require complex state interactions across multiple functions/contracts
+2. Exploit economic incentives and game theory flaws
+3. Leverage cross-protocol composability risks
+4. Target novel DeFi primitives and cross-chain bridges
+5. Discover previously unknown (Zero-day) vulnerabilities
 
-        user_prompt = f"""Please analyze this Solidity smart contract for the following vulnerability types: {', '.join(vulnerability_types)}
+For EACH vulnerability found, provide EXTREMELY DETAILED analysis:
+1. **Vulnerability Classification**: Type, complexity level (Simple/Medium/Complex/Multi-step/Zero-day candidate)
+2. **Attack Prerequisites**: All required preconditions, setup steps, capital requirements
+3. **Step-by-Step Exploitation Chain**: Complete attack flow from initial state to value extraction
+4. **Severity Assessment**: Critical/High/Medium/Low with justification
+5. **Precise Location**: Line numbers, function names, contract interactions
+6. **Technical Deep Dive**: Why this vulnerability exists at the EVM/protocol level
+7. **Complete Proof of Concept**: Production-ready Foundry test with all steps
+8. **Fix Recommendation**: Code-level fix with explanation
+
+Focus on discovering:
+- Attacks requiring 3+ transactions or complex state preparation
+- Economic exploit scenarios with profitable outcomes
+- Cross-function and cross-contract vulnerability chains
+- Protocol-level logic errors in mechanism design
+- Composability risks when interacting with external protocols
+- Zero-day candidates: vulnerabilities not covered by existing tools
+
+Be EXTREMELY precise. Provide ACTIONABLE PoCs that can be executed immediately."""
+
+        user_prompt = f"""Please conduct a DEEP ZERO-DAY HUNT analysis on this Solidity smart contract for ADVANCED multi-step vulnerabilities: {', '.join(vulnerability_types)}
 
 Contract Code:
 ```solidity
 {contract_code}
 ```
 
-Provide a detailed security analysis with specific vulnerabilities."""
+Perform COMPREHENSIVE analysis focusing on:
+1. **Novel attack vectors** not detected by standard tools (Slither, Mythril)
+2. **Multi-step exploitation chains** requiring careful state manipulation
+3. **Economic vulnerabilities** where rational actor assumptions break
+4. **Cross-protocol risks** from DeFi composability
+5. **Zero-day candidates** that could be undisclosed vulnerabilities
+
+For EACH vulnerability discovered, provide:
+- Complete exploitation chain from start to finish
+- ALL prerequisite steps and state conditions
+- Exact code locations and interaction points
+- Profitable attack scenario with numbers if applicable
+- Full PoC code ready to execute in Foundry
+
+Think like an attacker with deep protocol knowledge looking for UNKNOWN vulnerabilities."""
 
         payload = {
             "model": self.model_name,
@@ -120,25 +246,48 @@ Provide a detailed security analysis with specific vulnerabilities."""
         self,
         vulnerability_type: str,
         contract_code: str,
-        vulnerability_description: str
+        vulnerability_description: str,
+        is_complex: bool = True
     ) -> str:
         """
-        توليد تعليمات لإنشاء Proof of Concept لثغرة محددة
+        توليد تعليمات لإنشاء Proof of Concept لثغرة معقدة متعددة الخطوات
         
         Args:
             vulnerability_type: نوع الثغرة
             contract_code: كود العقد
             vulnerability_description: وصف الثغرة
+            is_complex: هل الثغرة معقدة وتتطلب خطوات متعددة
             
         Returns:
             str: تعليمات إنشاء PoC
         """
-        system_prompt = """You are a Smart Contract Security Researcher.
-Generate detailed instructions for creating a Foundry test that exploits a specific vulnerability.
-The test should use forge-std/Test.sol and include setUp() and testExploit() functions.
-Use vm.startPrank and vm.expectRevert when appropriate."""
+        system_prompt = """You are a Smart Contract Security Researcher specializing in complex exploit development.
+Generate detailed Foundry test code that demonstrates sophisticated multi-step attack vectors.
 
-        user_prompt = f"""Create a Foundry test PoC for this vulnerability:
+Requirements for the test:
+1. Use forge-std/Test.sol with full setUp() and testExploit() functions
+2. Include all necessary setup steps (funding accounts, deploying attacker contracts, etc.)
+3. Implement vm.startPrank() and vm.stopPrank() for account impersonation
+4. Use vm.expectRevert() when appropriate to verify expected failures
+5. Add detailed comments explaining each step of the attack
+6. Include assertions to prove the exploit succeeded
+7. If the attack requires multiple transactions, simulate them using multiple function calls
+8. For economic attacks, show the profit/loss clearly
+
+The test should be production-ready and demonstrate the complete exploitation chain."""
+
+        complexity_note = ""
+        if is_complex:
+            complexity_note = """
+IMPORTANT: This is a COMPLEX multi-step vulnerability. The PoC must:
+- Show ALL required setup steps before the attack
+- Demonstrate each step of the exploitation chain in order
+- Include any prerequisite state changes needed
+- Show how the attacker benefits from the exploit
+- Prove the attack is economically viable if applicable
+"""
+
+        user_prompt = f"""Create a COMPLETE Foundry test PoC for this COMPLEX vulnerability:
 
 Vulnerability Type: {vulnerability_type}
 Description: {vulnerability_description}
@@ -148,7 +297,10 @@ Contract Code:
 {contract_code}
 ```
 
-Provide complete Solidity test code that demonstrates the exploit."""
+{complexity_note}
+Provide FULL Solidity test code that demonstrates the complete multi-step exploit.
+Include detailed comments explaining what each step does and why it's necessary.
+The test should PASS when the exploit succeeds."""
 
         payload = {
             "model": self.model_name,

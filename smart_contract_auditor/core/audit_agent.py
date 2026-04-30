@@ -98,9 +98,12 @@ class AuditAgent:
         slither_results = self.slither.analyze(contract_path)
         print(f"✅ Slither found {slither_results.get('issues_count', 0)} potential issues")
         
-        # المرحلة 3: تحليل DeepSeek
-        print("\n🤖 Running DeepSeek AI analysis...")
-        deepseek_results = self.deepseek.analyze_contract(contract_code)
+        # المرحلة 3: تحليل DeepSeek للثغرات المعقدة
+        print("\n🤖 Running DeepSeek AI analysis for COMPLEX vulnerabilities...")
+        deepseek_results = self.deepseek.analyze_contract(
+            contract_code,
+            focus_on_complex=True  # التركيز على الثغرات المعقدة
+        )
         if deepseek_results.get('success'):
             print("✅ DeepSeek analysis completed")
         else:
@@ -203,34 +206,101 @@ class AuditAgent:
         return impact_map.get(impact.upper(), 'Medium')
     
     def _parse_ai_vulnerabilities(self, analysis_text: str) -> List[Dict[str, Any]]:
-        """استخراج الثغرات من نص تحليل AI"""
+        """استخراج الثغرات المعقدة و Zero-day من نص تحليل AI"""
         vulnerabilities = []
         
-        # محاولة بسيطة لاستخراج الثغرات المذكورة
+        # محاولة استخراج الثغرات المعقدة المذكورة
         lines = analysis_text.split('\n')
         current_vuln = None
+        in_vuln_section = False
+        
+        # أنواع الثغرات المعقدة و Zero-day التي نبحث عنها (2025-2026)
+        complex_vuln_types = [
+            # Advanced Reentrancy
+            'Cross-Function Reentrancy', 'Read-only Reentrancy', 'DelegateCall Proxies',
+            'Multi-protocol Composability Reentrancy', 'ERC-777', 'ERC-1155',
+            'Reentrancy Guards Bypass',
+            
+            # Flash Loan & Economic
+            'Flash Loan Sandwich', 'Multi-hop Flash Loan', 'Flash Mint Attack',
+            'Collateral Swapping', 'Governance Proposal Flash Loan',
+            
+            # Oracle Manipulation
+            'TWAP Oracle', 'Cross-chain Oracle', 'Chainlink Feed',
+            'Oracle Staleness', 'Multi-oracle Aggregator',
+            
+            # MEV & Front-running
+            'Mempool Scanning', 'JIT Liquidity', 'Validator Extractable Value',
+            'VEV', 'Cross-domain MEV', 'L2 Rollups', 'Time-bandit',
+            'Backrunning Chains',
+            
+            # Access Control & Governance
+            'Signature Malleability', 'Multi-sig', 'Governance Token Weight',
+            'Proposal Execution Timing', 'DelegateCall Chain',
+            'Upgradeable Proxy', 'Storage Collision',
+            
+            # DeFi Protocol
+            'Yield Farming Reward', 'Liquidity Pool Share', 'Staking Reward',
+            'Lock-up Period', 'Derivative Pricing', 'Perpetual Futures',
+            'Funding Rate',
+            
+            # Cross-chain & Bridge
+            'Bridge Message', 'Cross-chain Replay', 'Wrapped Token',
+            'Mint/Burn Race', 'Light Client Proof', 'Relayer Incentive',
+            
+            # L2 & Scaling
+            'Optimistic Rollup', 'Fraud Proof', 'ZK-proof', 'Circuit Constraint',
+            'Sequencer Censorship', 'State Commitment',
+            
+            # Zero-day Novel Vectors
+            'Storage Layout', 'Compiler Optimization', 'EVM Opcode',
+            'Precompile Behavior', 'Block Header', 'Timestamp Oracles',
+            
+            # Business Logic Complex
+            'Multi-transaction State Machine', 'Economic Incentive Misalignment',
+            'Rational Actor', 'Game Theory', 'Mechanism Design', 'Tokenomics',
+            
+            # General complex types
+            'Multi-step Reentrancy', 'Business Logic', 'Flash Loan',
+            'Oracle Manipulation', 'Access Control Chain', 'MEV',
+            'Governance', 'Composability', 'Economic', 'Time-based',
+            'Cross-protocol', 'Liquidity Drainage', 'Zero-day'
+        ]
         
         for line in lines:
-            line = line.strip()
+            line_stripped = line.strip()
             
-            # البحث عن أنواع الثغرات الشائعة
-            vuln_types = [
-                'Reentrancy', 'Overflow', 'Underflow', 'Front-running',
-                'Access Control', 'Business Logic', 'Timestamp', 'DoS'
-            ]
-            
-            for vtype in vuln_types:
-                if vtype.lower() in line.lower():
+            # البحث عن أنواع الثغرات المعقدة و Zero-day
+            for vtype in complex_vuln_types:
+                if vtype.lower() in line_stripped.lower():
                     if current_vuln:
                         vulnerabilities.append(current_vuln)
                     
+                    # تحديد مستوى الخطورة
+                    severity = 'High'
+                    if 'critical' in line_stripped.lower() or 'zero-day' in line_stripped.lower():
+                        severity = 'Critical'
+                    elif 'medium' in line_stripped.lower():
+                        severity = 'Medium'
+                    
+                    # تحديد إذا كانت Zero-day candidate
+                    is_zero_day = 'zero-day' in line_stripped.lower() or 'novel' in line_stripped.lower()
+                    
                     current_vuln = {
                         'type': vtype,
-                        'severity': 'High' if 'critical' in line.lower() else 'Medium',
-                        'description': line,
-                        'source': 'deepseek'
+                        'severity': severity,
+                        'description': line_stripped,
+                        'source': 'deepseek',
+                        'is_complex': True,
+                        'is_zero_day_candidate': is_zero_day
                     }
+                    in_vuln_section = True
                     break
+            
+            # إذا كنا في قسم ثغرة، نضيف المزيد من الوصف
+            if in_vuln_section and current_vuln:
+                if line_stripped and not line_stripped.startswith('```'):
+                    current_vuln['description'] += '\n' + line_stripped
         
         if current_vuln:
             vulnerabilities.append(current_vuln)

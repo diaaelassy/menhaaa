@@ -6,12 +6,99 @@
 
 - ✅ **قراءة عقود Solidity** من ملفات
 - ✅ **تحليل ثابت** باستخدام Slither
-- ✅ **تحليل ذكي** باستخدام DeepSeek AI
-- ✅ **اكتشاف ثغرات حقيقية**: Reentrancy, Overflow, Front-running, Business Logic Errors
+- ✅ **تحليل ذكي متقدم** باستخدام DeepSeek AI للثغرات المعقدة
+- ✅ **اكتشاف ثغرات معقدة متعددة الخطوات**: Multi-step Reentrancy, Flash Loan Attacks, Oracle Manipulation, Business Logic Exploits
 - ✅ **اختبار عملي** عبر Fuzzing بـ Echidna
-- ✅ **توليد PoC تلقائي** باستخدام Foundry
+- ✅ **توليد PoC تلقائي** باستخدام Foundry للاستغلال المعقد
 - ✅ **تأكيد الثغرات** بتشغيل الكود فعلياً
 - ✅ **تقرير نهائي** بالثغرات المؤكدة فقط
+
+## التركيز على الثغرات المعقدة و Zero-day (2025-2026)
+
+هذا النظام مصمم خصيصاً لاكتشاف **أحدث الثغرات المعقدة متعددة الخطوات** و **ثغرات Zero-day** المتوقعة في 2025-2026:
+
+### 🎯 فئات الثغرات المتقدمة
+
+#### 1. Advanced Reentrancy Variants (2025-2026)
+- Cross-Function Reentrancy with State Shadowing
+- Read-only Reentrancy in Oracle Price Feeds
+- Reentrancy Through DelegateCall Proxies
+- Multi-protocol Composability Reentrancy
+- Reentrancy in ERC-777/1155 Callbacks
+- Gas-efficient Reentrancy Guards Bypass
+
+#### 2. Flash Loan & Economic Attacks
+- Flash Loan Sandwich Attacks on AMM Liquidity
+- Multi-hop Flash Loan Arbitrage Exploits
+- Flash Mint Attack Vectors on NFT Protocols
+- Collateral Swapping Flash Loan Drains
+- Governance Proposal Flash Loan Voting
+
+#### 3. Oracle Manipulation (Advanced)
+- TWAP Oracle Manipulation via Multi-block Attacks
+- Cross-chain Oracle Price Desynchronization
+- Chainlink Feed Circumvention Techniques
+- Oracle Staleness Window Exploitation
+- Multi-oracle Aggregator Consensus Attacks
+
+#### 4. MEV & Front-running (2025 variants)
+- Advanced Mempool Scanning & JIT Liquidity Attacks
+- Validator Extractable Value (VEV) Post-Merge
+- Cross-domain MEV in L2 Rollups
+- Time-bandit Attacks on Historical State
+- Atomic Arbitrage Backrunning Chains
+
+#### 5. Access Control & Governance
+- Signature Malleability in Multi-sig Wallets
+- Governance Token Weight Manipulation
+- Proposal Execution Timing Attacks
+- DelegateCall Chain Authorization Bypass
+- Upgradeable Proxy Storage Collision Attacks
+
+#### 6. DeFi Protocol-Specific
+- Yield Farming Reward Calculation Exploits
+- Liquidity Pool Share Dilution Attacks
+- Staking Reward Lock-up Period Bypass
+- Derivative Pricing Model Manipulation
+- Perpetual Futures Funding Rate Exploits
+
+#### 7. Cross-chain & Bridge Vulnerabilities
+- Bridge Message Verification Bypass
+- Cross-chain Replay Attacks
+- Wrapped Token Mint/Burn Race Conditions
+- Light Client Proof Verification Flaws
+- Relayer Incentive Misalignment Exploits
+
+#### 8. L2 & Scaling Solutions
+- Optimistic Rollup Fraud Proof Window Attacks
+- ZK-proof Circuit Constraint Bypasses
+- Sequencer Censorship & Ordering Attacks
+- State Commitment Delay Exploits
+
+#### 9. Zero-day Novel Attack Vectors
+- Storage Layout Assumption Violations
+- Compiler Optimization Side-effects
+- EVM Opcode Gas Cost Change Exploits
+- Precompile Behavior Edge Cases
+- Block Header Manipulation Post-Merge
+- Miner/Validator Timestamp Oracles
+
+#### 10. Business Logic Complex Chains
+- Multi-transaction State Machine Exploits
+- Economic Incentive Misalignment Chains
+- Rational Actor Assumption Violations
+- Game Theory Equilibrium Disruptions
+- Mechanism Design Flaws in Tokenomics
+
+### 🔍 منهجية اكتشاف Zero-day
+
+النظام يستخدم AI متقدم للبحث عن:
+- ثغرات غير مكتشفة سابقاً (Zero-day candidates)
+- هجمات تتطلب 3+ معاملات أو إعداد حالة معقد
+- سيناريوهات استغلال اقتصادي مربحة
+- سلاسل ثغرات عبر وظائف وعقود متعددة
+- أخطاء منطقية في تصميم الآليات
+- مخاطر التركيب عند التفاعل مع بروتوكولات خارجية
 
 ## المتطلبات
 
