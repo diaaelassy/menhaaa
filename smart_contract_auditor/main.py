@@ -119,13 +119,21 @@ def print_report_summary(report: dict):
 def main():
     """الدالة الرئيسية"""
     parser = argparse.ArgumentParser(
-        description='Smart Contract Auditor - Automated Security Analysis',
+        description='Smart Contract Auditor - Automated Security Analysis for Multi-Contract Systems',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # تدقيق عقد واحد
   python main.py --contract-path ./MyContract.sol --api-key sk-xxxxx
-  python main.py --contract-path ./Token.sol --api-key sk-xxxxx --output report.json
-  python main.py --contract-path ./DeFi.sol --api-key sk-xxxxx --model deepseek-coder
+  
+  # تدقيق نظام متعدد العقود (Router + Proxy + Implementation)
+  python main.py --contract-path ./Router.sol --additional-paths ./Proxy.sol ./Impl.sol --api-key sk-xxxxx
+  
+  # تدقيق مع حفظ التقرير
+  python main.py --contract-path ./DeFi.sol --api-key sk-xxxxx --output report.json
+  
+  # تحديد موديل مختلف
+  python main.py --contract-path ./Token.sol --api-key sk-xxxxx --model deepseek-coder
         """
     )
     
@@ -133,7 +141,15 @@ Examples:
         '--contract-path',
         type=str,
         required=True,
-        help='Path to the Solidity smart contract file'
+        help='Path to the main Solidity smart contract file'
+    )
+    
+    parser.add_argument(
+        '--additional-paths',
+        type=str,
+        nargs='+',
+        default=None,
+        help='Paths to additional contract files (Router, Proxy, Libraries, etc.)'
     )
     
     parser.add_argument(
@@ -213,8 +229,11 @@ Examples:
             model_name=model_name
         )
         
-        # بدء التدقيق
-        report = agent.audit_contract(args.contract_path)
+        # بدء التدقيق متعدد العقود
+        report = agent.audit_contract(
+            contract_path=args.contract_path,
+            additional_paths=args.additional_paths
+        )
         
         # طباعة التقرير
         print_report_summary(report)
