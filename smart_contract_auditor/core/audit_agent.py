@@ -894,19 +894,27 @@ contract MultiContractExploitTest is Test {{
     
     def _generate_final_report(
         self,
-        contract_path: str,
-        contract_code: str,
+        contracts_data: Dict[str, str],
+        relationships: List[Dict[str, Any]],
         slither_results: Dict[str, Any],
         deepseek_results: Dict[str, Any],
         confirmed_vulnerabilities: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        """إنشاء التقرير النهائي"""
+        """إنشاء التقرير النهائي لأنظمة متعددة العقود"""
+        
+        # استخراج اسم العقد الرئيسي
+        main_contract_path = list(contracts_data.keys())[0] if contracts_data else "Unknown"
+        main_contract_name = self._extract_contract_name(main_contract_path)
+        
         return {
             'success': True,
-            'contract_path': contract_path,
-            'contract_name': self._extract_contract_name(contract_path),
+            'main_contract_path': main_contract_path,
+            'main_contract_name': main_contract_name,
+            'contracts_audited': list(contracts_data.keys()),
+            'total_contracts': len(contracts_data),
+            'relationships_analyzed': len(relationships),
             'audit_summary': {
-                'total_issues_found': len(slither_results.get('issues', [])),
+                'total_issues_found': sum(len(sr.get('issues', [])) for sr in slither_results.values()) if isinstance(slither_results, dict) else 0,
                 'confirmed_vulnerabilities': len(confirmed_vulnerabilities),
                 'critical': sum(1 for v in confirmed_vulnerabilities if v.get('severity') == 'Critical'),
                 'high': sum(1 for v in confirmed_vulnerabilities if v.get('severity') == 'High'),
@@ -915,6 +923,7 @@ contract MultiContractExploitTest is Test {{
             },
             'confirmed_vulnerabilities': confirmed_vulnerabilities,
             'tools_used': ['Slither', 'DeepSeek AI', 'Foundry'],
+            'contract_relationships': relationships,
             'recommendation': self._generate_recommendation(confirmed_vulnerabilities)
         }
     
