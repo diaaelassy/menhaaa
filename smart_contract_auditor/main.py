@@ -149,7 +149,7 @@ Examples:
         type=str,
         nargs='+',
         default=None,
-        help='Paths to additional contract files (Router, Proxy, Libraries, etc.)'
+        help='Paths to additional contract files (Router, Proxy, Libraries, etc.). Use space-separated paths or comma-separated.'
     )
     
     parser.add_argument(
@@ -187,6 +187,17 @@ Examples:
     )
     
     args = parser.parse_args()
+    
+    # معالجة المسارات الإضافية (دعم الفواصل والمسافات)
+    additional_paths = None
+    if args.additional_paths:
+        additional_paths = []
+        for path_item in args.additional_paths:
+            # إذا كان يحتوي على فواصل، نقسمه
+            if ',' in path_item:
+                additional_paths.extend([p.strip() for p in path_item.split(',') if p.strip()])
+            else:
+                additional_paths.append(path_item.strip())
     
     # التحقق من ملف العقد
     if not validate_contract_path(args.contract_path):
@@ -232,7 +243,7 @@ Examples:
         # بدء التدقيق متعدد العقود
         report = agent.audit_contract(
             contract_path=args.contract_path,
-            additional_paths=args.additional_paths
+            additional_paths=additional_paths
         )
         
         # طباعة التقرير
