@@ -32,16 +32,69 @@ def load_config(config_path: str) -> dict:
         return {}
 
 
-def validate_contract_path(contract_path: str) -> bool:
-    """التحقق من وجود ملف العقد"""
+def find_all_sol_files(directory: str) -> list:
+    """
+    يبحث بشكل متكرر عن جميع ملفات .sol في المجلد والمجلدات الفرعية
+    Returns a list of .sol file paths
+    """
+    import os
+    from pathlib import Path
+    
+    sol_files = []
+    dir_path = Path(directory)
+    
+    if not dir_path.exists():
+        print(f"❌ Error: Directory {directory} does not exist")
+        return []
+        
+    if not dir_path.is_dir():
+        print(f"❌ Error: {directory} is not a directory")
+        return []
+    
+    print(f"📂 Scanning directory recursively: {directory}")
+    
+    # البحث المتكرر عن جميع ملفات .sol
+    for root, dirs, files in os.walk(dir_path):
+        # استبعاد مجلدات الاختبارات والمكتبات الشائعة لتسريع التحليل
+        dirs[:] = [d for d in dirs if d not in ['test', 'tests', 'node_modules', '.git', 'lib']]
+        
+        for file in files:
+            if file.endswith('.sol'):
+                # استبعاد ملفات الاختبار التي تبدأ بـ test_ أو تنتهي بـ .t.sol
+                if file.startswith('test_') or file.endswith('.t.sol'):
+                    continue
+                full_path = os.path.join(root, file)
+                sol_files.append(full_path)
+    
+    if sol_files:
+        print(f"✅ Found {len(sol_files)} Solidity file(s) to audit")
+    else:
+        print(f"⚠️  No .sol files found in {directory}")
+    
+    return sol_files
+
+
+def validate_contract_path(contract_path: str) -> list:
+    """
+    التحقق من وجود ملف العقد أو مجلد العقود
+    Returns a list of .sol files to audit
+    """
+    import os
+    
     if not os.path.exists(contract_path):
-        print(f"Error: Contract file not found at {contract_path}")
-        return False
+        print(f"❌ Error: Path not found at {contract_path}")
+        return []
     
+    # إذا كان مجلداً، نبحث عن جميع ملفات .sol
+    if os.path.isdir(contract_path):
+        print(f"📁 Detected directory mode")
+        return find_all_sol_files(contract_path)
+    
+    # إذا كان ملفاً
     if not contract_path.endswith('.sol'):
-        print("Warning: File does not have .sol extension")
+        print(f"⚠️  Warning: File {contract_path} does not have .sol extension, attempting anyway.")
     
-    return True
+    return [contract_path]
 
 
 def save_report(report: dict, output_path: str) -> bool:
@@ -199,9 +252,20 @@ Examples:
             else:
                 additional_paths.append(path_item.strip())
     
-    # التحقق من ملف العقد
-    if not validate_contract_path(args.contract_path):
+    # التحقق من ملف العقد - الآن يعيد قائمة من الملفات
+    contract_files = validate_contract_path(args.contract_path)
+    if not contract_files:
         sys.exit(1)
+    
+    # إذا اكتشفنا مجلداً، نستخدم كل الملفات المكتشفة
+    main_contract = contract_files[0]
+    if len(contract_files) > 1:
+        print(f"📎 Will audit {len(contract_files)} contracts total")
+        # إضافة باقي الملفات كمسارات إضافية
+        if additional_paths:
+            additional_paths.extend(contract_files[1:])
+        else:
+            additional_paths = contract_files[1:]
     
     # تحميل الإعدادات
     config_path = args.config if os.path.isabs(args.config) else os.path.join(
@@ -228,7 +292,12 @@ Examples:
     print("="*70)
     print(f"\n📋 Configuration:")
     print(f"   Model: {model_name}")
-    print(f"   Contract: {args.contract_path}")
+    if os.path.isdir(args.contract_path):
+        print(f"   Directory: {args.contract_path} ({len(contract_files)} files)")
+    else:
+        print(f"   Contract: {main_contract}")
+    if additional_paths:
+        print(f"   Additional: {len(additional_paths)} file(s)")
     print(f"   Config: {config_path}")
     print()
     
@@ -242,7 +311,7 @@ Examples:
         
         # بدء التدقيق متعدد العقود
         report = agent.audit_contract(
-            contract_path=args.contract_path,
+            contract_path=main_contract,
             additional_paths=additional_paths
         )
         
